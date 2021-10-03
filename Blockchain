@@ -1,0 +1,125 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "name": "Blockchain(Project).ipynb",
+      "provenance": [],
+      "collapsed_sections": [],
+      "authorship_tag": "ABX9TyN/2GsU6IcCyTrdvvik4m7/",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/shiv6789/Solidity/blob/main/Blockchain(Project).ipynb\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "Z0evNibLaVZg"
+      },
+      "source": [
+        "import datetime \n",
+        "import hashlib\n",
+        "import json\n",
+        "from flask import Flask,jsonify\n",
+        "\n",
+        "#part 1 :Building a Blockchain\n",
+        "class Blockchain:\n",
+        "\n",
+        "  def __init__(self):\n",
+        "    self.chain=[]#formation of blockchain in init method\n",
+        "    self.createBlock(proof=1,previousHash='0')#genesisi block\n",
+        "\n",
+        "  def createBlock(self,proof,previousHash):\n",
+        "    #following code of block is for dictionary wher there is key and values.\n",
+        "    #dictionary is similiar to hash map in javva.\n",
+        "    block={\"index\": len(self.chain)+1,\n",
+        "           \"timestamp\": str(datetime.datetime.now()),\n",
+        "           \"proof\": proof,\n",
+        "           \"previous hash\": previousHash\n",
+        "           }\n",
+        "    self.chain.append(block)#adding block ti block chain.\n",
+        "    return block \n",
+        "\n",
+        "  def getPreviousBlock(self):\n",
+        "     return self.chain[-1]#-1] means the last element in a sequence\n",
+        "\n",
+        "  def proofOfWork(self,previousProof):\n",
+        "    newProof=1\n",
+        "    checkProof=False\n",
+        "    while checkProof is False:\n",
+        "      hashOperations=hashlib.sha256(str(newProof**2-previousProof**2).encode).hexdigest()#hexdigest:it converst a encoded data to hex decimal format.\n",
+        "      if hashOperations[:4]==\"0000\":#to check that hash return must have first four charcter of strring must be zero.\n",
+        "        checkProof=True\n",
+        "      else:\n",
+        "        newProof+=1;\n",
+        "    return newProof\n",
+        "\n",
+        "  def hash(self,block):\n",
+        "      encodedBlock=json.dumps(block,sort_keys=True).encode()#converts python dicttionarry to json string\n",
+        "      return hashlib.sha256(encodedBlock).hexdigest()\n",
+        "\n",
+        "  def isChainValid(self,chain):\n",
+        "    previousBlock=chain[0]#chain[0] is genesisi block.\n",
+        "    blockIndex=1;\n",
+        "    while blockIndex < len(chain):\n",
+        "      block=chain[blockIndex]\n",
+        "      if block[\"previous hash\"]!=self.hash(previousBlock):#checking whether previous hash is matching or not\n",
+        "        return False\n",
+        "      previousProof=previousBlock[\"proof\"]\n",
+        "      proof=block[\"proof\"]\n",
+        "      hashOperations=hashlib.sha256(str(proof**2-previousProof**2).encode()).hexidigest()\n",
+        "      if(hashOpeartions[:4]!='0000'):#checking wheteher its following proof of work condition.\n",
+        "       return False\n",
+        "      \n",
+        "      previousBlock=block\n",
+        "      blockIndex+=1;#iterating complete blockchain one by one for validations.\n",
+        "    \n",
+        "    return True\n",
+        "\n",
+        "#part 2 :Mining A bLockchain\n",
+        "\n",
+        "#creating a web app\n",
+        "app=Flask(__name__)\n",
+        "\n",
+        "#creating a blockchain\n",
+        "blockchain=Blockchain()\n",
+        "\n",
+        "#mining a block\n",
+        "@app.route('/mineBlock',methods=['GET'])\n",
+        "\n",
+        "def mineBlock():\n",
+        "  previousBlock=blockchain.getPreviousBlock()\n",
+        "  previousProof=previousBlock[\"proof\"]\n",
+        "  previousHash=blockchain.hash(previousBlock)\n",
+        "  proof=blockchain.proofOfWork(previousProof)\n",
+        "  block=blockchain.createBlock(proof,previousHash)\n",
+        "  response={\"message\":\"Congratulations,You Have Succesfully Mined A Block\",\n",
+        "            \"index\":block[\"index\"],\n",
+        "            \"Timestamp\":block[\"timestamp\"],\n",
+        "            \"proof\":block[\"proof\"],\n",
+        "            \"previousHash\":block[\"previousHash\"]}\n",
+        "\n",
+        "  return jsonify(response),200 #sonify() is a helper method provided by Flask to properly return JSON data. jsonify() returns a Response object with the application/json mimetype set, whereas json.dumps() simply returns a string of JSON data. This could lead to unintended results."
+      ],
+      "execution_count": 16,
+      "outputs": []
+    }
+  ]
+}
